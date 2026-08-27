@@ -55,13 +55,13 @@ upload the ZIP under Devices → Add Plugin.
 ## Build & Test
 
 ```bash
-# build artifact (flat ZIP, 5 files)
+# build artifact (flat ZIP, 5 files; sources live in src/ for TRMNL GitHub sync)
 rm -f icl-week-calendar.zip
-zip -j icl-week-calendar.zip icl-week-calendar/settings.yml \
-    icl-week-calendar/full.liquid \
-    icl-week-calendar/half_horizontal.liquid \
-    icl-week-calendar/half_vertical.liquid \
-    icl-week-calendar/quadrant.liquid
+zip -j icl-week-calendar.zip src/settings.yml \
+    src/full.liquid \
+    src/half_horizontal.liquid \
+    src/half_vertical.liquid \
+    src/quadrant.liquid
 
 # render tests (python-liquid harness with patched date filter)
 pip install python-liquid

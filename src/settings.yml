@@ -6,7 +6,7 @@ static_data: ''
 polling_verb: get
 framework_version: 3.2.0
 serverless_language: ''
-polling_url: ''
+polling_url: "{{ics_url}}"
 polling_headers: ''
 polling_body: ''
 id: 458137
@@ -30,6 +30,100 @@ oauth_token_field_name: ''
 oauth_expiry_field_name: ''
 oauth_expiry_strategy: ''
 oauth_fixed_expiry_ms: ''
-name: My Plugin
-description:
-refresh_interval:
+name: iCal Wochenkalender
+description: Rolling week view for Fastmail calendars on e-ink dashboards.
+refresh_interval: 15
+
+author: DaChefTony
+author_bio: Built by DaChefTony. Rolling week view for Fastmail calendars on e-ink dashboards.
+custom_fields:
+  - keyname: ics_url
+    name: Fastmail ICS URL
+    field_type: string
+    placeholder: https://app.fastmail.com/calendar/v1/...
+    description: "Fastmail > Einstellungen > Kalender > Edit & Share > Publish aktivieren, ICS-Link kopieren und 'webcal' durch 'https' ersetzen."
+  - keyname: utc_offset_hours
+    name: Zeitzone (UTC-Offset in Stunden)
+    field_type: select
+    description: "Leer = Zeitzone des Geraets/Servers nutzen."
+    options:
+      - '-12'
+      - '-11'
+      - '-10'
+      - '-9'
+      - '-8'
+      - '-7'
+      - '-6'
+      - '-5'
+      - '-4'
+      - '-3'
+      - '-2'
+      - '-1'
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+      - '8'
+      - '9'
+      - '10'
+      - '11'
+      - '12'
+  - keyname: layout_mode
+    name: Ansicht
+    field_type: select
+    default: list
+    description: "list = Termilliste (3 Spalten), week = Wochenraster mit Zeitachse"
+    options:
+      - list
+      - week
+  - keyname: list_font_size
+    name: "Liste: Schriftgröße"
+    field_type: select
+    default: base
+    description: "Nur im Modus 'list' sichtbar."
+    options:
+      - small
+      - base
+      - large
+      - xlarge
+  - keyname: grid_start_hour
+    name: "Wochenraster: erste Stunde"
+    field_type: select
+    default: '7'
+    description: "Nur im Modus 'week' sichtbar."
+    options:
+      - '0'
+      - '1'
+      - '2'
+      - '3'
+      - '4'
+      - '5'
+      - '6'
+      - '7'
+      - '8'
+      - '9'
+      - '10'
+      - '11'
+      - '12'
+  - keyname: grid_end_hour
+    name: "Wochenraster: letzte Stunde"
+    field_type: select
+    default: '21'
+    description: "Nur im Modus 'week' sichtbar."
+    options:
+      - '12'
+      - '13'
+      - '14'
+      - '15'
+      - '16'
+      - '17'
+      - '18'
+      - '19'
+      - '20'
+      - '21'
+      - '22'
+      - '23'
