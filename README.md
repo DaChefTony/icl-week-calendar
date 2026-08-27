@@ -43,8 +43,8 @@ Two layouts, four viewports:
 ## Installation
 
 ### LaraPaper
-1. Download [`icl-week-calendar.zip`](../../releases) (or build it yourself,
-   see below).
+1. Download the [latest ZIP](https://github.com/DaChefTony/icl-week-calendar/releases/latest)
+   (built automatically from a tested tag).
 2. Plugins → Import Recipe Archive → upload the ZIP.
 3. Enter your ICS URL, pick layout and font size → Force Refresh.
 
