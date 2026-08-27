@@ -1,0 +1,145 @@
+{% comment %}
+  iCal Wochenkalender - Half Horizontal (800x240)
+  List-Stil: 3 Spalten, Tage MIT Terminen gechunkt, Inhalt beginnt links.
+  layout_mode wird hier ignoriert (Wochenraster passt nicht in halbe Viewports).
+{% endcomment %}
+
+{% assign off = trmnl.user.utc_offset | default: 0 %}
+{% assign tz_sel = config.utc_offset_hours | default: utc_offset_hours %}
+{% assign tz_check = tz_sel | append: 'x' %}
+{% if tz_check != 'x' %}
+  {% assign off = tz_sel | plus: 0 | times: 3600 %}
+{% endif %}
+{% assign now_ts = 'now' | date: '%s' | plus: 0 %}
+{% assign today_idx = now_ts | plus: off | divided_by: 86400 %}
+{% if data.ical %}
+  {% assign events = data.ical | sort: 'DTSTART' %}
+{% endif %}
+
+{% comment %} Schriftgroesse (Framework-Stufen): small/base/large/xlarge, Default base {% endcomment %}
+{% assign fs = config.list_font_size | default: 'base' %}
+{% assign title_cls = 'title--base' %}
+{% assign label_cls = 'label--base' %}
+{% assign cnt_fs = '--label-font-size' %}
+{% assign desc_cls = 'description--large' %}
+{% if fs == 'small' %}
+  {% assign title_cls = 'title--small' %}
+  {% assign label_cls = 'label--small' %}
+  {% assign cnt_fs = '--label-small-font-size' %}
+  {% assign desc_cls = 'description--base' %}
+{% elsif fs == 'large' %}
+  {% assign title_cls = 'title--large' %}
+  {% assign label_cls = 'label--large' %}
+  {% assign cnt_fs = '--label-large-font-size' %}
+  {% assign desc_cls = 'description--xlarge' %}
+{% elsif fs == 'xlarge' %}
+  {% assign title_cls = 'title--xlarge' %}
+  {% assign label_cls = 'label--xlarge' %}
+  {% assign cnt_fs = '--label-xlarge-font-size' %}
+  {% assign desc_cls = 'description--xxlarge' %}
+{% endif %}
+
+<style>
+  .wkl .column { justify-content: flex-start; }
+  .wkl .item[data-overflow-label="true"] .label { font-size: var({{ cnt_fs }}); }
+</style>
+<script>
+  window.I18n = Object.assign(window.I18n || {}, {
+    andXMore: function(n) { return n === 1 ? '+1 weiterer' : '+' + n + ' weitere'; }
+  });
+</script>
+
+{% assign n_days = 0 %}
+{% for j in (0..6) %}
+  {% assign col_idx = today_idx | plus: j %}
+  {% assign cnt = 0 %}
+  {% for event in events %}
+    {% if event.DTSTART == blank %}{% continue %}{% endif %}
+    {% assign s_chk = event.DTSTART | date: '%s' | plus: 0 | plus: off %}
+    {% assign day_chk = s_chk | divided_by: 86400 %}
+    {% if day_chk == col_idx %}{% assign cnt = cnt | plus: 1 %}{% endif %}
+  {% endfor %}
+  {% if cnt > 0 %}{% assign n_days = n_days | plus: 1 %}{% endif %}
+{% endfor %}
+
+<div class="layout layout--col">
+  {% if n_days == 0 %}
+    <div class="item">
+      <div class="content">
+        <span class="label">Keine Termine in den n&auml;chsten 7 Tagen</span>
+      </div>
+    </div>
+  {% else %}
+    {% assign per_col = n_days | plus: 2 | divided_by: 3 %}
+    <div class="columns wkl">
+      {% for c in (0..2) %}
+        {% assign lo = c | times: per_col %}
+        {% assign hi = lo | plus: per_col %}
+        <div class="column" data-overflow="true" data-overflow-counter="true">
+          {% assign filled = 0 %}
+          {% for j in (0..6) %}
+            {% assign col_idx = today_idx | plus: j %}
+            {% assign col_ts = col_idx | times: 86400 %}
+            {% assign col_dow = col_ts | date: '%w' | plus: 0 %}
+            {% assign wd = '' %}
+            {% case col_dow %}
+              {% when 0 %}{% assign wd = 'Sonntag' %}
+              {% when 1 %}{% assign wd = 'Montag' %}
+              {% when 2 %}{% assign wd = 'Dienstag' %}
+              {% when 3 %}{% assign wd = 'Mittwoch' %}
+              {% when 4 %}{% assign wd = 'Donnerstag' %}
+              {% when 5 %}{% assign wd = 'Freitag' %}
+              {% else %}{% assign wd = 'Samstag' %}
+            {% endcase %}
+
+            {% assign cnt = 0 %}
+            {% for event in events %}
+              {% if event.DTSTART == blank %}{% continue %}{% endif %}
+              {% assign s_chk = event.DTSTART | date: '%s' | plus: 0 | plus: off %}
+              {% assign day_chk = s_chk | divided_by: 86400 %}
+              {% if day_chk == col_idx %}{% assign cnt = cnt | plus: 1 %}{% endif %}
+            {% endfor %}
+
+            {% if cnt > 0 %}
+              {% if filled >= lo and filled < hi %}
+                <span class="label {{ label_cls }} label--gray{% if j == 0 %} label--inverted{% endif %}">{{ wd }}, {{ col_ts | date: '%d' }}.{{ col_ts | date: '%m' | plus: 0 }}.</span>
+                {% for event in events %}
+                  {% if event.DTSTART == blank %}{% continue %}{% endif %}
+                  {% assign s_raw = event.DTSTART | date: '%s' | plus: 0 %}
+                  {% assign s_loc = s_raw | plus: off %}
+                  {% assign day_of_ev = s_loc | divided_by: 86400 %}
+                  {% if day_of_ev != col_idx %}{% continue %}{% endif %}
+                  {% assign e_raw = event.DTEND | date: '%s' | plus: 0 %}
+                  {% if e_raw == 0 %}{% assign e_raw = s_raw %}{% endif %}
+                  {% assign e_loc = e_raw | plus: off %}
+                  {% assign dur = e_raw | minus: s_raw %}
+                  <div class="item">
+                    <div class="meta"></div>
+                    <div class="content{% if e_loc <= now_ts %} text--gray-40{% endif %}">
+                      <span class="title {{ title_cls }}">{{ event.SUMMARY | default: '(ohne Titel)' }}</span>
+                      {% if event.LOCATION != blank %}
+                        <span class="description {{ desc_cls }}" data-clamp="1">{{ event.LOCATION }}</span>
+                      {% endif %}
+                      {% if dur >= 86400 %}
+                        <span class="label {{ label_cls }}">ganzt&auml;gig</span>
+                      {% else %}
+                        <span class="label {{ label_cls }} label--underline">{{ event.DTSTART | date: '%H:%M' }} &ndash; {{ event.DTEND | date: '%H:%M' }}</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+              {% assign filled = filled | plus: 1 %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="title_bar">
+  <img class="image image--adaptive" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%225%22%3E%3Crect%20x%3D%228%22%20y%3D%2216%22%20width%3D%2248%22%20height%3D%2240%22%20rx%3D%226%22%2F%3E%3Cpath%20d%3D%22M8%2030h48%22%2F%3E%3Cpath%20d%3D%22M22%2010v12M42%2010v12%22%2F%3E%3Cpath%20d%3D%22M20%2040h8M36%2040h8M20%2050h8M36%2050h8%22%2F%3E%3C%2Fsvg%3E" />
+  <span class="title">Kalender</span>
+  <span class="instance">{{ now_ts | plus: off | date: '%d.%m.' }}</span>
+</div>

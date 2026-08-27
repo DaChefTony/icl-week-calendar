@@ -1,0 +1,324 @@
+{% comment %}
+  iCal Wochenkalender - Full View mit zwei Modi:
+  - list (default): Terminliste in 3 Spalten (Vorbild: default.png)
+  - week: Wochenraster mit Zeitachse (Vorbild: week overview.png)
+  Umschaltung ueber Custom Field config.layout_mode.
+  Datenquelle (LaraPaper iCal-Poller): data.ical = [ { SUMMARY, DTSTART, DTEND, LOCATION }, ... ]
+
+  HINWEIS: .layout des Frameworks zentriert Kinder horizontal (align-items:center)
+  -> eigene Root-Container brauchen width:100% (.wkw / .wkl), sonst schweben sie.
+{% endcomment %}
+
+{% assign off = trmnl.user.utc_offset | default: 0 %}
+{% assign tz_sel = config.utc_offset_hours | default: utc_offset_hours %}
+{% assign tz_check = tz_sel | append: 'x' %}
+{% if tz_check != 'x' %}
+  {% assign off = tz_sel | plus: 0 | times: 3600 %}
+{% endif %}
+{% assign now_ts = 'now' | date: '%s' | plus: 0 %}
+{% assign today_idx = now_ts | plus: off | divided_by: 86400 %}
+{% if data.ical %}
+  {% assign events = data.ical | sort: 'DTSTART' %}
+{% endif %}
+
+{% assign dow = now_ts | plus: off | date: '%w' | plus: 0 %}
+{% assign wd_full = 'Sonntag' %}
+{% case dow %}
+  {% when 1 %}{% assign wd_full = 'Montag' %}
+  {% when 2 %}{% assign wd_full = 'Dienstag' %}
+  {% when 3 %}{% assign wd_full = 'Mittwoch' %}
+  {% when 4 %}{% assign wd_full = 'Donnerstag' %}
+  {% when 5 %}{% assign wd_full = 'Freitag' %}
+  {% when 6 %}{% assign wd_full = 'Samstag' %}
+{% endcase %}
+{% capture today_str %}{{ now_ts | plus: off | date: '%d' }}.{{ now_ts | plus: off | date: '%m.' }}{{ now_ts | plus: off | date: '%Y' }}{% endcapture %}
+
+{% if config.layout_mode == 'week' %}
+
+{% comment %} ============================================================
+   MODUS week: Wochenraster mit Zeitachse
+============================================================ {% endcomment %}
+
+{% assign start_h = config.grid_start_hour | default: 7 | plus: 0 %}
+{% assign end_h = config.grid_end_hour | default: 21 | plus: 0 %}
+{% if end_h <= start_h %}{% assign end_h = start_h | plus: 12 %}{% endif %}
+{% assign span_h = end_h | minus: start_h %}
+{% assign span_min = span_h | times: 60 %}
+{% assign start_min = start_h | times: 60 %}
+{% assign end_min = end_h | times: 60 %}
+
+<style>
+  .wkw { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; font-size: 0.85em; }
+  .wkw-header { display: flex; border-bottom: 2px solid #000; flex: none; }
+  .wkw-gutter { width: 3.4em; flex: none; position: relative; }
+  .wkw-dayhead { flex: 1; text-align: center; font-weight: bold; padding: 0.15em 0.1em; white-space: nowrap; overflow: hidden; }
+  .wkw-allday { display: flex; border-bottom: 1px solid #999; flex: none; min-height: 1.6em; }
+  .wkw-allday-cell { flex: 1; padding: 0.1em 0.15em; overflow: hidden; }
+  .wkw-allday-label { font-size: 0.75em; color: #555; }
+  .wkw-body { display: flex; flex: 1 1 auto; min-height: 0; }
+  .wkw-day { flex: 1 1 0; min-width: 0; position: relative; border-right: 1px solid #bbb; overflow: hidden; }
+  .wkw-day:last-child { border-right: none; }
+  .wkw-line { position: absolute; left: 0; right: 0; border-top: 1px dotted #ccc; height: 0; }
+  .wkw-hour { position: absolute; left: 0.2em; font-size: 0.75em; color: #555; }
+  .wkw-ev { position: absolute; left: 1px; right: 2px; background: #ccc; border-left: 3px solid #000;
+            padding: 0 0.2em; overflow: hidden; line-height: 1.2; }
+  .wkw-ev-past { background: #e8e8e8; border-left-color: #888; color: #888; }
+  .wkw-ev-time { display: block; font-weight: bold; font-size: 0.8em; white-space: nowrap; }
+  .wkw-ev-title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .wkw-allday-ev { display: block; background: #000; color: #fff; padding: 0 0.2em;
+                   font-size: 0.75em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+</style>
+
+<div class="layout layout--col">
+  <div class="wkw">
+    <div class="wkw-header">
+      <div class="wkw-gutter"></div>
+      {% for j in (0..6) %}
+        {% assign col_idx = today_idx | plus: j %}
+        {% assign col_ts = col_idx | times: 86400 %}
+        {% assign col_dow = col_ts | date: '%w' | plus: 0 %}
+        {% assign wd = '' %}
+        {% case col_dow %}
+          {% when 0 %}{% assign wd = 'So' %}
+          {% when 1 %}{% assign wd = 'Mo' %}
+          {% when 2 %}{% assign wd = 'Di' %}
+          {% when 3 %}{% assign wd = 'Mi' %}
+          {% when 4 %}{% assign wd = 'Do' %}
+          {% when 5 %}{% assign wd = 'Fr' %}
+          {% else %}{% assign wd = 'Sa' %}
+        {% endcase %}
+        <div class="wkw-dayhead{% if j == 0 %} inverse{% endif %}">{{ wd }} {{ col_ts | date: '%d' }}.{{ col_ts | date: '%m' | plus: 0 }}.</div>
+      {% endfor %}
+    </div>
+
+    <div class="wkw-allday">
+      <div class="wkw-gutter"><span class="wkw-allday-label">Ganzt&auml;gig</span></div>
+      {% for j in (0..6) %}
+        {% assign col_idx = today_idx | plus: j %}
+        {% assign col_ts = col_idx | times: 86400 %}
+        <div class="wkw-allday-cell">
+          {% for event in events %}
+            {% if event.DTSTART == blank %}{% continue %}{% endif %}
+            {% assign s_raw = event.DTSTART | date: '%s' | plus: 0 %}
+            {% assign s_loc = s_raw | plus: off %}
+            {% assign e_raw = event.DTEND | date: '%s' | plus: 0 %}
+            {% if e_raw == 0 %}{% assign e_raw = s_raw %}{% endif %}
+            {% assign e_loc = e_raw | plus: off %}
+            {% assign dur = e_raw | minus: s_raw %}
+            {% if dur < 86400 %}{% continue %}{% endif %}
+            {% assign s_day = s_loc | divided_by: 86400 %}
+            {% if s_day <= col_idx and e_loc > col_ts %}
+              <span class="wkw-allday-ev">{{ event.SUMMARY | default: '(ohne Titel)' }}</span>
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="wkw-body">
+      <div class="wkw-gutter">
+        {% assign h0 = start_h | plus: 1 %}
+        {% for h in (h0..end_h) %}
+          {% if h < end_h %}
+            {% assign hp = h | minus: start_h | times: 100 | divided_by: span_h %}
+            <span class="wkw-hour" style="top: {{ hp }}%;">{{ h }}</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% for j in (0..6) %}
+        {% assign col_idx = today_idx | plus: j %}
+        {% assign col_ts = col_idx | times: 86400 %}
+        <div class="wkw-day">
+          {% assign h0 = start_h | plus: 1 %}
+          {% for h in (h0..end_h) %}
+            {% assign hp = h | minus: start_h | times: 100 | divided_by: span_h %}
+            <div class="wkw-line" style="top: {{ hp }}%;"></div>
+          {% endfor %}
+
+          {% for event in events %}
+            {% if event.DTSTART == blank %}{% continue %}{% endif %}
+            {% assign s_raw = event.DTSTART | date: '%s' | plus: 0 %}
+            {% assign s_loc = s_raw | plus: off %}
+            {% assign e_raw = event.DTEND | date: '%s' | plus: 0 %}
+            {% if e_raw == 0 %}{% assign e_raw = s_raw %}{% endif %}
+            {% assign e_loc = e_raw | plus: off %}
+            {% assign dur = e_raw | minus: s_raw %}
+            {% if dur >= 86400 %}{% continue %}{% endif %}
+            {% assign s_day = s_loc | divided_by: 86400 %}
+            {% if s_day != col_idx %}{% continue %}{% endif %}
+
+            {% comment %} Zeitbasis = Wanduhrzeit aus dem Terminstring (off-inkorrektheit-sicher) {% endcomment %}
+            {% assign ev_h = event.DTSTART | date: '%H' | plus: 0 %}
+            {% assign ev_m = event.DTSTART | date: '%M' | plus: 0 %}
+            {% assign mins = ev_h | times: 60 | plus: ev_m %}
+            {% assign ev_eh = event.DTEND | date: '%H' | plus: 0 %}
+            {% assign ev_em = event.DTEND | date: '%M' | plus: 0 %}
+            {% assign end_mins = ev_eh | times: 60 | plus: ev_em %}
+            {% if end_mins <= mins %}{% assign end_mins = 1440 %}{% endif %}
+
+            {% assign top_pct = mins | minus: start_min | times: 100 | divided_by: span_min %}
+            {% if top_pct < 0 %}{% assign top_pct = 0 %}{% endif %}
+            {% assign vis_end = end_mins %}
+            {% if vis_end > end_min %}{% assign vis_end = end_min %}{% endif %}
+            {% assign h_pct = vis_end | minus: start_min | times: 100 | divided_by: span_min | minus: top_pct %}
+            {% if h_pct < 2 %}{% assign h_pct = 2 %}{% endif %}
+            {% if top_pct > 97 %}{% assign top_pct = 97 %}{% endif %}
+
+            {% capture ev_label %}{% if ev_h < 10 %}0{{ ev_h }}{% else %}{{ ev_h }}{% endif %}:{% if ev_m < 10 %}0{{ ev_m }}{% else %}{{ ev_m }}{% endif %}{% endcapture %}
+
+            <div class="wkw-ev{% if e_loc <= now_ts %} wkw-ev-past{% endif %}" style="top: {{ top_pct }}%; height: {{ h_pct }}%;">
+              <span class="wkw-ev-time">{{ ev_label }}</span>
+              <span class="wkw-ev-title">{{ event.SUMMARY | default: '(ohne Titel)' }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="title_bar">
+  <img class="image image--adaptive" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%225%22%3E%3Crect%20x%3D%228%22%20y%3D%2216%22%20width%3D%2248%22%20height%3D%2240%22%20rx%3D%226%22%2F%3E%3Cpath%20d%3D%22M8%2030h48%22%2F%3E%3Cpath%20d%3D%22M22%2010v12M42%2010v12%22%2F%3E%3Cpath%20d%3D%22M20%2040h8M36%2040h8M20%2050h8M36%2050h8%22%2F%3E%3C%2Fsvg%3E" />
+  <span class="title">Kalender &ndash; Woche</span>
+  <span class="instance">{{ now_ts | plus: off | date: '%d.%m.' }}&ndash;{{ today_idx | plus: 6 | times: 86400 | date: '%d.%m.' }}</span>
+</div>
+
+{% else %}
+
+{% comment %} ============================================================
+   MODUS list (default): Terminliste in 3 Spalten
+   Spalten werden nur ueber Tage MIT Terminen verteilt,
+   damit der Inhalt links beginnt (keine leeren Spalten rechts).
+============================================================ {% endcomment %}
+
+{% comment %} Schriftgroesse (Framework-Stufen): small 16/13, base 26/16,
+   large 30/21, xlarge 35/26 px (Titel/Label). Default: base. {% endcomment %}
+{% assign fs = config.list_font_size | default: 'base' %}
+{% assign title_cls = 'title--base' %}
+{% assign label_cls = 'label--base' %}
+{% assign cnt_fs = '--label-font-size' %}
+{% assign desc_cls = 'description--large' %}
+{% if fs == 'small' %}
+  {% assign title_cls = 'title--small' %}
+  {% assign label_cls = 'label--small' %}
+  {% assign cnt_fs = '--label-small-font-size' %}
+  {% assign desc_cls = 'description--base' %}
+{% elsif fs == 'large' %}
+  {% assign title_cls = 'title--large' %}
+  {% assign label_cls = 'label--large' %}
+  {% assign cnt_fs = '--label-large-font-size' %}
+  {% assign desc_cls = 'description--xlarge' %}
+{% elsif fs == 'xlarge' %}
+  {% assign title_cls = 'title--xlarge' %}
+  {% assign label_cls = 'label--xlarge' %}
+  {% assign cnt_fs = '--label-xlarge-font-size' %}
+  {% assign desc_cls = 'description--xxlarge' %}
+{% endif %}
+
+<style>
+  .wkl .column { justify-content: flex-start; }
+  .wkl .item[data-overflow-label="true"] .label { font-size: var({{ cnt_fs }}); }
+</style>
+<script>
+  window.I18n = Object.assign(window.I18n || {}, {
+    andXMore: function(n) { return n === 1 ? '+1 weiterer' : '+' + n + ' weitere'; }
+  });
+</script>
+
+{% comment %} Zaehlen: wie viele Tage haben Termine? {% endcomment %}
+{% assign n_days = 0 %}
+{% for j in (0..6) %}
+  {% assign col_idx = today_idx | plus: j %}
+  {% assign cnt = 0 %}
+  {% for event in events %}
+    {% if event.DTSTART == blank %}{% continue %}{% endif %}
+    {% assign s_chk = event.DTSTART | date: '%s' | plus: 0 | plus: off %}
+    {% assign day_chk = s_chk | divided_by: 86400 %}
+    {% if day_chk == col_idx %}{% assign cnt = cnt | plus: 1 %}{% endif %}
+  {% endfor %}
+  {% if cnt > 0 %}{% assign n_days = n_days | plus: 1 %}{% endif %}
+{% endfor %}
+
+<div class="layout layout--col">
+  {% if n_days == 0 %}
+    <div class="item">
+      <div class="content">
+        <span class="label">Keine Termine in den n&auml;chsten 7 Tagen</span>
+      </div>
+    </div>
+  {% else %}
+    {% assign per_col = n_days | plus: 2 | divided_by: 3 %}
+    <div class="columns wkl">
+      {% for c in (0..2) %}
+        {% assign lo = c | times: per_col %}
+        {% assign hi = lo | plus: per_col %}
+        <div class="column" data-overflow="true" data-overflow-counter="true">
+          {% assign filled = 0 %}
+          {% for j in (0..6) %}
+            {% assign col_idx = today_idx | plus: j %}
+            {% assign col_ts = col_idx | times: 86400 %}
+            {% assign col_dow = col_ts | date: '%w' | plus: 0 %}
+            {% assign wd = '' %}
+            {% case col_dow %}
+              {% when 0 %}{% assign wd = 'Sonntag' %}
+              {% when 1 %}{% assign wd = 'Montag' %}
+              {% when 2 %}{% assign wd = 'Dienstag' %}
+              {% when 3 %}{% assign wd = 'Mittwoch' %}
+              {% when 4 %}{% assign wd = 'Donnerstag' %}
+              {% when 5 %}{% assign wd = 'Freitag' %}
+              {% else %}{% assign wd = 'Samstag' %}
+            {% endcase %}
+
+            {% assign cnt = 0 %}
+            {% for event in events %}
+              {% if event.DTSTART == blank %}{% continue %}{% endif %}
+              {% assign s_chk = event.DTSTART | date: '%s' | plus: 0 | plus: off %}
+              {% assign day_chk = s_chk | divided_by: 86400 %}
+              {% if day_chk == col_idx %}{% assign cnt = cnt | plus: 1 %}{% endif %}
+            {% endfor %}
+
+            {% if cnt > 0 %}
+              {% if filled >= lo and filled < hi %}
+                <span class="label {{ label_cls }} label--gray{% if j == 0 %} label--inverted{% endif %}">{{ wd }}, {{ col_ts | date: '%d' }}.{{ col_ts | date: '%m' | plus: 0 }}.</span>
+                {% for event in events %}
+                  {% if event.DTSTART == blank %}{% continue %}{% endif %}
+                  {% assign s_raw = event.DTSTART | date: '%s' | plus: 0 %}
+                  {% assign s_loc = s_raw | plus: off %}
+                  {% assign day_of_ev = s_loc | divided_by: 86400 %}
+                  {% if day_of_ev != col_idx %}{% continue %}{% endif %}
+                  {% assign e_raw = event.DTEND | date: '%s' | plus: 0 %}
+                  {% if e_raw == 0 %}{% assign e_raw = s_raw %}{% endif %}
+                  {% assign e_loc = e_raw | plus: off %}
+                  {% assign dur = e_raw | minus: s_raw %}
+                  <div class="item">
+                    <div class="meta"></div>
+                    <div class="content{% if e_loc <= now_ts %} text--gray-40{% endif %}">
+                      <span class="title {{ title_cls }}">{{ event.SUMMARY | default: '(ohne Titel)' }}</span>
+                      {% if event.LOCATION != blank %}
+                        <span class="description {{ desc_cls }}" data-clamp="1">{{ event.LOCATION }}</span>
+                      {% endif %}
+{% if dur >= 86400 %}
+                    <span class="label {{ label_cls }}">ganzt&auml;gig</span>
+                  {% else %}
+                    <span class="label {{ label_cls }} label--underline">{{ event.DTSTART | date: '%H:%M' }} &ndash; {{ event.DTEND | date: '%H:%M' }}</span>
+                  {% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+              {% assign filled = filled | plus: 1 %}
+            {% endif %}
+          {% endfor %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+
+<div class="title_bar">
+  <img class="image image--adaptive" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%225%22%3E%3Crect%20x%3D%228%22%20y%3D%2216%22%20width%3D%2248%22%20height%3D%2240%22%20rx%3D%226%22%2F%3E%3Cpath%20d%3D%22M8%2030h48%22%2F%3E%3Cpath%20d%3D%22M22%2010v12M42%2010v12%22%2F%3E%3Cpath%20d%3D%22M20%2040h8M36%2040h8M20%2050h8M36%2050h8%22%2F%3E%3C%2Fsvg%3E" />
+  <span class="title">Kalender &ndash; n&auml;chste 7 Tage</span>
+  <span class="instance">{{ wd_full }}, {{ today_str }}</span>
+</div>
+
+{% endif %}

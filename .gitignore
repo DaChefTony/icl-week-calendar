@@ -1,0 +1,8 @@
+# Build artifact (rebuild with the zip command in README)
+*.zip
+
+# Personal screenshots (may contain private calendar data)
+*.png
+
+# Internal engineering notes
+tasks/
