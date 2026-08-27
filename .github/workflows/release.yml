@@ -19,11 +19,11 @@ jobs:
       - name: Build plugin ZIP
         run: |
           zip -j icl-week-calendar.zip \
-              icl-week-calendar/settings.yml \
-              icl-week-calendar/full.liquid \
-              icl-week-calendar/half_horizontal.liquid \
-              icl-week-calendar/half_vertical.liquid \
-              icl-week-calendar/quadrant.liquid
+              src/settings.yml \
+              src/full.liquid \
+              src/half_horizontal.liquid \
+              src/half_vertical.liquid \
+              src/quadrant.liquid
           unzip -l icl-week-calendar.zip
       - name: Create GitHub release with ZIP asset
         uses: softprops/action-gh-release@v2

@@ -6,7 +6,7 @@ from pathlib import Path
 import liquid
 from liquid import Environment
 
-SRC = Path(__file__).resolve().parent.parent / "icl-week-calendar"
+SRC = Path(__file__).resolve().parent.parent / "src"
 
 TZ = dt.timezone(dt.timedelta(hours=2))  # Europe/Berlin Sommerzeit
 now = dt.datetime(2026, 8, 26, 10, 15, tzinfo=TZ)  # Mittwoch
