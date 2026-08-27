@@ -32,7 +32,7 @@ jobs:
           generate_release_notes: true
           body: |
             TRMNL-format plugin (LaraPaper / TRMNL Cloud): rolling 7-day view
-            from a Fastmail ICS feed.
+            from any published ICS calendar feed.
 
             **Install:** Plugins → Import Recipe Archive → upload `icl-week-calendar.zip`
             (LaraPaper) or Devices → Add Plugin (TRMNL).

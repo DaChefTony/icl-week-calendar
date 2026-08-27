@@ -1,7 +1,8 @@
 # iCal Week Calendar for TRMNL / LaraPaper
 
 A TRMNL-format plugin that shows a **rolling week** (today + 6 days) from any
-published **Fastmail** (or other iCalendar) feed on e-ink dashboards.
+published **iCalendar (ICS)** feed on e-ink dashboards – works with any
+provider that can publish a calendar URL.
 
 Two layouts, four viewports:
 
@@ -33,7 +34,7 @@ Two layouts, four viewports:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `ics_url` | string | – | Fastmail → Settings → Calendar → Edit & Share → Publish; replace `webcal://` with `https://` |
+| `ics_url` | string | – | Published iCal/ICS link of your calendar from your provider's share/publish settings. If it starts with `webcal://`, replace with `https://` |
 | `utc_offset_hours` | select −12…12 | device | Only used for "which day is today" mapping. Empty = device timezone (DST-safe) |
 | `layout_mode` | select | `list` | full view: `list` / `week` |
 | `list_font_size` | select | `base` | Text size in list views (framework steps) |

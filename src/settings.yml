@@ -31,17 +31,17 @@ oauth_expiry_field_name: ''
 oauth_expiry_strategy: ''
 oauth_fixed_expiry_ms: ''
 name: iCal Wochenkalender
-description: Rolling week view for Fastmail calendars on e-ink dashboards.
+description: Rolling week view from any ICS feed
 refresh_interval: 15
 
 author: DaChefTony
-author_bio: Built by DaChefTony. Rolling week view for Fastmail calendars on e-ink dashboards.
+author_bio: Built by DaChefTony. Rolling week view from any published ICS calendar feed on e-ink dashboards.
 custom_fields:
   - keyname: ics_url
-    name: Fastmail ICS URL
+    name: Calendar ICS URL
     field_type: string
-    placeholder: https://app.fastmail.com/calendar/v1/...
-    description: "Fastmail > Einstellungen > Kalender > Edit & Share > Publish aktivieren, ICS-Link kopieren und 'webcal' durch 'https' ersetzen."
+    placeholder: https://example.com/calendar.ics
+    description: "Veröffentlichten iCal-/ICS-Link deines Kalenderanbieters einfügen Beginnt der Link mit webcal://, durch https:// ersetzen."
   - keyname: utc_offset_hours
     name: Zeitzone (UTC-Offset in Stunden)
     field_type: select
