@@ -44,7 +44,7 @@ Two layouts, four viewports:
 ## Installation
 
 ### LaraPaper
-1. Download the [latest ZIP](https://github.com/DaChefTony/icl-week-calendar/releases/latest)
+1. Download the [latest ZIP](https://github.com/DaChefTony/trmnl-icl-week-calendar/releases/latest)
    (built automatically from a tested tag).
 2. Plugins → Import Recipe Archive → upload the ZIP.
 3. Enter your ICS URL, pick layout and font size → Force Refresh.
@@ -57,8 +57,8 @@ upload the ZIP under Devices → Add Plugin.
 
 ```bash
 # build artifact (flat ZIP, 5 files; sources live in src/ for TRMNL GitHub sync)
-rm -f icl-week-calendar.zip
-zip -j icl-week-calendar.zip src/settings.yml \
+rm -f trmnl-icl-week-calendar.zip
+zip -j trmnl-icl-week-calendar.zip src/settings.yml \
     src/full.liquid \
     src/half_horizontal.liquid \
     src/half_vertical.liquid \

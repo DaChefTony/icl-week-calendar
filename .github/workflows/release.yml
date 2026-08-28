@@ -18,23 +18,23 @@ jobs:
           python3 tests/render_test.py
       - name: Build plugin ZIP
         run: |
-          zip -j icl-week-calendar.zip \
+          zip -j trmnl-icl-week-calendar.zip \
               src/settings.yml \
               src/full.liquid \
-              icl-week-calendar/half_horizontal.liquid \
-              icl-week-calendar/half_vertical.liquid \
-              icl-week-calendar/quadrant.liquid
-          unzip -l icl-week-calendar.zip
+              src/half_horizontal.liquid \
+              src/half_vertical.liquid \
+              src/quadrant.liquid
+          unzip -l trmnl-icl-week-calendar.zip
       - name: Create GitHub release with ZIP asset
         uses: softprops/action-gh-release@v2
         with:
-          files: icl-week-calendar.zip
+          files: trmnl-icl-week-calendar.zip
           generate_release_notes: true
           body: |
             TRMNL-format plugin (LaraPaper / TRMNL Cloud): rolling 7-day view
             from any published ICS calendar feed.
 
-            **Install:** Plugins → Import Recipe Archive → upload `icl-week-calendar.zip`
+            **Install:** Plugins → Import Recipe Archive → upload `trmnl-icl-week-calendar.zip`
             (LaraPaper) or Devices → Add Plugin (TRMNL).
 
             See README for configuration fields and notes.
